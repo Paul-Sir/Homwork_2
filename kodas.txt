@@ -1,0 +1,44 @@
+
+fastqc *.fastq.gz 
+
+trim_galore -j 6 --paired SRR11647650_1.fastq.gz SRR11647650_2.fastq.gz  
+trim_galore -j 6 --paired SRR11647652_1.fastq.gz SRR11647652_2.fastq.gz  
+trim_galore -j 6 --paired SRR11647660_1.fastq.gz SRR11647660_2.fastq.gz 
+trim_galore -j 6 --paired SRR11647662_1.fastq.gz SRR11647662_2.fastq.gz 
+
+
+conda activate bwameth_env
+bwameth.py index ref/GRCh38.p14.genome.fa
+
+
+conda activate bsmap_env
+bsmap -a SRR11647650_1_val_1.fq.gz -b SRR11647650_2_val_2.fq.gz -d ref/GRCh38.p14.genome.fa -o SRR11647650.bam -p 4  
+bsmap -a SRR11647652_1_val_1.fq.gz -b SRR11647652_2_val_2.fq.gz -d ref/GRCh38.p14.genome.fa -o SRR11647652.bam -p 4   
+bsmap -a SRR11647660_1_val_1.fq.gz -b SRR11647660_2_val_2.fq.gz -d ref/GRCh38.p14.genome.fa -o SRR11647660.bam -p 4   
+bsmap -a SRR11647662_1_val_1.fq.gz -b SRR11647662_2_val_2.fq.gz -d ref/GRCh38.p14.genome.fa -o SRR11647662.bam -p 4  
+
+
+conda activate picard_env
+picard AddOrReplaceReadGroups     I=SRR11647650.bam     O=SRR11647650_naujas.bam     RGID=1 RGLB=lib1     RGPL=ILLUMINA     RGPU=unit1     RGSM=sample
+picard AddOrReplaceReadGroups     I=SRR11647652.bam     O=SRR11647652_naujas.bam     RGID=1 RGLB=lib1     RGPL=ILLUMINA     RGPU=unit1     RGSM=sample
+picard AddOrReplaceReadGroups     I=SRR11647660.bam     O=SRR11647660_naujas.bam     RGID=1 RGLB=lib1     RGPL=ILLUMINA     RGPU=unit1     RGSM=sample
+picard AddOrReplaceReadGroups     I=SRR11647662.bam     O=SRR11647662_naujas.bam     RGID=1 RGLB=lib1     RGPL=ILLUMINA     RGPU=unit1     RGSM=sample
+
+
+samtools sort -@ 6 SRR11647650.bam -o SRR11647650_sorted.bam
+samtools sort -@ 6 SRR11647652.bam -o SRR11647652_sorted.bam
+samtools sort -@ 6 SRR11647660.bam -o SRR11647660_sorted.bam
+samtools sort -@ 6 SRR11647662.bam -o SRR11647662_sorted.bam 
+
+
+conda activate methyldackel_env
+MethylDackel mbias ref/GRCh38.p14.genome.fa SRR11647650_sorted.bam SRR11647650_mbias
+MethylDackel mbias ref/GRCh38.p14.genome.fa SRR11647652_sorted.bam SRR11647652_mbias
+MethylDackel mbias ref/GRCh38.p14.genome.fa SRR11647660_sorted.bam SRR11647660_mbias
+MethylDackel mbias ref/GRCh38.p14.genome.fa SRR11647662_sorted.bam SRR11647662_mbias
+
+
+MethylDackel extract --OT 3,0,2,120 --OB 2,123,5,124 ref/GRCh38.p14.genome.fa SRR11647650_sorted.bam -o SRR11647650_sorted
+MethylDackel extract --OT 2,0,2,111 --OB 2,124,15,124 ref/GRCh38.p14.genome.fa SRR11647652_sorted.bam -o SRR11647652_sorted
+MethylDackel extract --OT 3,0,2,120 --OB 2,123,5,124 ref/GRCh38.p14.genome.fa SRR11647660_sorted.bam -o SRR11647660_sorted
+MethylDackel extract --OT 3,0,2,120 --OB 2,123,6,124 ref/GRCh38.p14.genome.fa SRR11647662_sorted.bam -o SRR11647662_sorted
